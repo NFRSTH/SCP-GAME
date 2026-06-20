@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./db/custom.db"
+}
+
+model GameState {
+  id        String   @id @default(cuid())
+  data      String
+  updatedAt DateTime @updatedAt
+}
+
+model Unlock {
+  id            String   @id @default(cuid())
+  scpUnlocked   Boolean
+  runsCompleted Int
+  bestRole      String?
+}

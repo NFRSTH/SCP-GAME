@@ -1,0 +1,161 @@
+import type { RoleDef, DifficultyDef } from '../types'
+
+export const ROLES: RoleDef[] = [
+  {
+    id: 'class-d',
+    name: 'Class-D Personnel',
+    description:
+      'A disposable test subject — formerly a death-row inmate. You wake in a locked cell with nothing. No authority, no weapons, no friends.',
+    goal: 'Escape the facility alive through Gate A or Gate B.',
+    gameplay: 'Pure stealth survival horror. Avoid SCPs and armed personnel. Scavenge keycards, tools and exits. Mistakes are fatal.',
+    startHealth: 100,
+    startStamina: 100,
+    startItems: [],
+    startKeycard: 0,
+    hasWeapon: false,
+  },
+  {
+    id: 'scientist',
+    name: 'Scientist',
+    description:
+      'Foundation research staff. You have clearance to terminals and a Level 2 keycard, but you are not a fighter.',
+    goal: 'Escape the facility OR restore power and evacuate via the elevators.',
+    gameplay: 'Puzzle-solving and terminal usage. Manage door access, evade SCPs, and decide between fleeing or fixing the facility.',
+    startHealth: 100,
+    startStamina: 100,
+    startItems: ['keycard2', 'radio'],
+    startKeycard: 2,
+    hasWeapon: false,
+  },
+  {
+    id: 'guard',
+    name: 'Security Guard',
+    description:
+      'Armed Foundation security. You are trained for containment response and have a pistol, a Level 3 keycard and body armor.',
+    goal: 'Re-contain the breach OR survive until evacuation arrives.',
+    gameplay: 'Combat-based survival. Patrol zones, respond to alarms, engage threats, lock down dangerous areas. Ammo is limited.',
+    startHealth: 120,
+    startStamina: 110,
+    startItems: ['keycard3', 'pistol', 'radio'],
+    startKeycard: 3,
+    hasWeapon: true,
+  },
+  {
+    id: 'scp',
+    name: 'SCP (Anomalous Entity)',
+    description:
+      'Take control of a supernatural anomaly. Each SCP plays completely differently. The facility is your hunting ground — or your prison.',
+    goal: 'Escape containment or complete your SCP-specific objective.',
+    gameplay: 'Varies wildly by SCP. Some hunt, some trap, some guard. Discover each one\'s unique abilities and limitations.',
+    startHealth: 100,
+    startStamina: 100,
+    startItems: [],
+    startKeycard: 0,
+    hasWeapon: false,
+    locked: true,
+    lockReason: 'Complete one full successful run as Class-D, Scientist or Guard to unlock.',
+  },
+]
+
+export function getRole(id: string): RoleDef | undefined {
+  return ROLES.find((r) => r.id === id)
+}
+
+export const DIFFICULTIES: DifficultyDef[] = [
+  {
+    id: 'easy',
+    name: 'Easy',
+    description:
+      'Slower SCPs, plentiful resources, clear warnings before danger, and grace turns before lethal contact. A gentle introduction to the facility.',
+    startHealth: 130,
+    startStamina: 120,
+    resourceMultiplier: 1.6,
+    scpSpeedMultiplier: 0.6,
+    scpDamageMultiplier: 0.5,
+    aiSmart: 0.3,
+    staminaDrainMultiplier: 0.6,
+    startBattery: 100,
+    startItems: ['bandage'],
+    lethalWarningTurns: 2,
+    showProximityWarnings: true,
+    maxConcurrentRoamingSCPs: 3,
+    scpEscapeChancePerTick: 0.04,
+    maxLockedDoors: 3,
+    powerCutChance: 0,
+    powerOutageDuration: 2,
+    scpAbilityCooldownMultiplier: 1.5,
+  },
+  {
+    id: 'balanced',
+    name: 'Balanced (Default)',
+    description:
+      'Standard SCP behaviour, moderate resources, fair encounters. One grace turn before lethal contact. The intended SCP experience with full counter-play.',
+    startHealth: 100,
+    startStamina: 100,
+    resourceMultiplier: 1,
+    scpSpeedMultiplier: 1,
+    scpDamageMultiplier: 1,
+    aiSmart: 0.6,
+    staminaDrainMultiplier: 1,
+    startBattery: 100,
+    startItems: [],
+    lethalWarningTurns: 1,
+    showProximityWarnings: true,
+    maxConcurrentRoamingSCPs: 5,
+    scpEscapeChancePerTick: 0.08,
+    maxLockedDoors: 5,
+    powerCutChance: 0.04,
+    powerOutageDuration: 3,
+    scpAbilityCooldownMultiplier: 1,
+  },
+  {
+    id: 'hard',
+    name: 'Hard',
+    description:
+      'Faster SCPs, fewer resources, more aggressive AI. No grace turns — but SCPs still follow readable patterns. For experienced personnel.',
+    startHealth: 90,
+    startStamina: 95,
+    resourceMultiplier: 0.7,
+    scpSpeedMultiplier: 1.2,
+    scpDamageMultiplier: 1.25,
+    aiSmart: 0.85,
+    staminaDrainMultiplier: 1.2,
+    startBattery: 80,
+    startItems: [],
+    lethalWarningTurns: 0,
+    showProximityWarnings: false,
+    maxConcurrentRoamingSCPs: 7,
+    scpEscapeChancePerTick: 0.12,
+    maxLockedDoors: 8,
+    powerCutChance: 0.08,
+    powerOutageDuration: 4,
+    scpAbilityCooldownMultiplier: 0.8,
+  },
+  {
+    id: 'hardcore',
+    name: 'Hardcore',
+    description:
+      'No safety guarantees. Fastest SCPs, scarcest resources, instant lethal contact, no warnings. High punishment system. You asked for this.',
+    startHealth: 80,
+    startStamina: 90,
+    resourceMultiplier: 0.5,
+    scpSpeedMultiplier: 1.3,
+    scpDamageMultiplier: 1.5,
+    aiSmart: 1,
+    staminaDrainMultiplier: 1.4,
+    startBattery: 60,
+    startItems: [],
+    lethalWarningTurns: 0,
+    showProximityWarnings: false,
+    maxConcurrentRoamingSCPs: 10,
+    scpEscapeChancePerTick: 0.15,
+    maxLockedDoors: 99,
+    powerCutChance: 0.12,
+    powerOutageDuration: 6,
+    scpAbilityCooldownMultiplier: 0.6,
+  },
+]
+
+export function getDifficulty(id: string): DifficultyDef | undefined {
+  return DIFFICULTIES.find((d) => d.id === id)
+}
