@@ -1,17 +1,18 @@
 import type { Room, Door, Zone } from '../types'
 
-// ===== Facility Layout (5x5 grid) =====
-//   x: 0 (west)  -> 4 (east)
-//   y: 0 (north) -> 4 (south)
+// ===== Facility Layout (6x6 grid — 36 rooms) =====
+//   x: 0 (west)  -> 5 (east)
+//   y: 0 (north) -> 5 (south)
 //
-//   y0:  gate-a      reception    checkpoint    armory        gate-b
-//   y1:  cells-d     corridor-l1  scp173-cell   scp860-door   lab-wing
-//   y2:  server-rm   corridor-l2  research-lab  scp096-cell   medbay
-//   y3:  power-rm    corridor-h1  scp049-cell   scp106-cell   scp682-chamber
-//   y4:  maint-shaft corridor-h2  scp939-nest   scp079-core   scp001-vault
+//   y0:  gate-a      reception    checkpoint    armory        gate-b        elevator-shaft
+//   y1:  cells-d     corridor-l1  scp173-cell   scp860-door   lab-wing      cafeteria
+//   y2:  server-rm   corridor-l2  research-lab  scp096-cell   medbay        decontam
+//   y3:  power-rm    corridor-h1  scp049-cell   scp106-cell   scp682-chamber backup-gen
+//   y4:  maint-shaft corridor-h2  scp939-nest   scp079-core   scp001-vault  ventilation
+//   y5:  storage     locker-room  incinerator   morgue        backup-server emergency-stairs
 
-export const FACILITY_WIDTH = 5
-export const FACILITY_HEIGHT = 5
+export const FACILITY_WIDTH = 6
+export const FACILITY_HEIGHT = 6
 
 export const ROOMS: Room[] = [
   // ---- Row 0: Support / Entrance ----
@@ -389,6 +390,207 @@ export const ROOMS: Room[] = [
     items: [{ itemId: 'keycard5', chance: 0.6 }],
     scpSpawns: ['scp-001'],
   },
+
+  // ---- Column 5 (x=5): New east wing ----
+  {
+    id: 'elevator-shaft',
+    name: 'Freight Elevator Shaft',
+    shortName: 'Elevator',
+    description:
+      'A massive freight elevator. The cable hangs severed — cut from below during the breach. The shaft descends into darkness. A maintenance tag is clipped to the railing.',
+    ambient: 'Wind howls up the shaft. The cable sways and clangs against the walls.',
+    x: 5,
+    y: 0,
+    zone: 'support',
+    isDark: false,
+    items: [
+      { itemId: 'docLore7', chance: 0.7 },
+      { itemId: 'battery', chance: 0.5 },
+    ],
+    lore: 'The freight elevator was the primary cargo route to the surface. SCP-079 severed the cable to trap personnel below.',
+  },
+  {
+    id: 'cafeteria',
+    name: 'Staff Cafeteria',
+    shortName: 'Cafeteria',
+    description:
+      'The facility cafeteria. Long tables, overturned chairs, half-eaten meals. A vending machine hums, still powered. Bullet holes and claw marks score the serving counter.',
+    ambient: 'A vending machine dispenses a can with a mechanical clunk. No one is there to take it.',
+    x: 5,
+    y: 1,
+    zone: 'support',
+    items: [
+      { itemId: 'bandage', chance: 0.5 },
+      { itemId: 'painkillers', chance: 0.6 },
+      { itemId: 'docLore6', chance: 0.7 },
+      { itemId: 'battery', chance: 0.3 },
+    ],
+    lore: 'Something came through the cafeteria vents during the breach. Three staff never made it out.',
+  },
+  {
+    id: 'decontam',
+    name: 'Decontamination Chamber',
+    shortName: 'Decontam',
+    description:
+      'A sealed decontamination chamber with spray nozzles and UV lights. The system is on standby — entering may trigger a gas purge. A gas mask would help. The chamber connects Labs to the east wing.',
+    ambient: 'Hissing nozzles prime, then fall silent. The UV lights pulse a sickly violet.',
+    x: 5,
+    y: 2,
+    zone: 'labs',
+    isDark: false,
+    items: [
+      { itemId: 'gasMask', chance: 0.5 },
+      { itemId: 'docLore4', chance: 0.6 },
+      { itemId: 'bandage', chance: 0.4 },
+    ],
+    lore: 'The decontamination chamber can purge biological contaminants — or flood with incapacitating gas if SCP-079 overrides it.',
+  },
+  {
+    id: 'backup-gen',
+    name: 'Backup Generator Room',
+    shortName: 'Backup Gen',
+    description:
+      'A secondary generator room. Diesel engines sit cold, but the emergency battery bank glows green. Activating this provides limited power even if SCP-079 cuts the main reactor — reducing blackout duration.',
+    ambient: 'The slow drip of diesel. Battery cells hum a low, steady tone.',
+    x: 5,
+    y: 3,
+    zone: 'heavy',
+    isDark: true,
+    items: [
+      { itemId: 'battery', chance: 0.7 },
+      { itemId: 'medkit', chance: 0.3 },
+      { itemId: 'keycard4', chance: 0.25 },
+    ],
+    lore: 'The backup generator can sustain emergency lighting and door locks when the main reactor fails.',
+  },
+  {
+    id: 'ventilation',
+    name: 'Ventilation Control',
+    shortName: 'Ventilation',
+    description:
+      'A maze of giant ducts and intake fans. The air circulation system spans the entire facility. SCP-939 is rumored to travel through these ducts. A control panel can seal the vents to slow them.',
+    ambient: 'The deep thrum of fans. Something skitters in the ductwork overhead.',
+    x: 5,
+    y: 4,
+    zone: 'deep',
+    isDark: true,
+    items: [
+      { itemId: 'gasMask', chance: 0.4 },
+      { itemId: 'battery', chance: 0.5 },
+      { itemId: 'docLore4', chance: 0.5 },
+    ],
+    lore: 'SCP-939 uses the ventilation system to move unseen between zones. Sealing the vents traps them — or angers them.',
+  },
+
+  // ---- Row 5 (y=5): Deep service level ----
+  {
+    id: 'storage',
+    name: 'Storage Bay',
+    shortName: 'Storage',
+    description:
+      'A vast storage bay filled with crates, supply pallets, and forgotten equipment. Forklifts sit idle. Something has been rifling through the crates — lids are pried open, contents scattered.',
+    ambient: 'The groan of settling crates. A forklift\'s warning light blinks amber, forever.',
+    x: 0,
+    y: 5,
+    zone: 'support',
+    isDark: true,
+    items: [
+      { itemId: 'crowbar', chance: 0.6 },
+      { itemId: 'battery', chance: 0.6 },
+      { itemId: 'medkit', chance: 0.3 },
+      { itemId: 'docLore8', chance: 0.6 },
+      { itemId: 'lockpick', chance: 0.3 },
+    ],
+    lore: 'The storage bay holds supplies for the entire facility — including, reportedly, the missing SCP-860 blue key.',
+  },
+  {
+    id: 'locker-room',
+    name: 'Locker Room & Showers',
+    shortName: 'Lockers',
+    description:
+      'Staff lockers and communal showers. Most lockers are ajar, their contents spilled. A few remain locked — they might hold personal effects or hidden contraband. The showers drip, endlessly.',
+    ambient: 'A showerhead drips in the silence. Lockers creak on broken hinges.',
+    x: 1,
+    y: 5,
+    zone: 'support',
+    isDark: false,
+    items: [
+      { itemId: 'bandage', chance: 0.5 },
+      { itemId: 'painkillers', chance: 0.4 },
+      { itemId: 'keycard1', chance: 0.4 },
+      { itemId: 'flashlight', chance: 0.3 },
+    ],
+  },
+  {
+    id: 'incinerator',
+    name: 'Waste Incinerator',
+    shortName: 'Incinerator',
+    description:
+      'A industrial waste incinerator, cold now but still radiating residual heat. A conveyor feeds biological waste into the furnace. SCP-049\'s "cured" victims were disposed of here. The smell lingers.',
+    ambient: 'Metal ticks as it cools. The faint smell of burnt flesh.',
+    x: 2,
+    y: 5,
+    zone: 'heavy',
+    isDark: true,
+    items: [
+      { itemId: 'medkit', chance: 0.3 },
+      { itemId: 'gasMask', chance: 0.3 },
+      { itemId: 'docLore2', chance: 0.4 },
+    ],
+    lore: 'The incinerator was used to dispose of SCP-049-2 instances — the reanimated victims of the Plague Doctor\'s "cure".',
+  },
+  {
+    id: 'morgue',
+    name: 'Morgue',
+    shortName: 'Morgue',
+    description:
+      'The facility morgue. Stainless steel drawers line the walls, most closed. A few gurneys hold body bags. The temperature is near-freezing. One drawer is open — and empty. The body bag on the nearest gurney is torn from the inside.',
+    ambient: 'The hum of refrigeration. A body bag rustles — just the air conditioning. Probably.',
+    x: 3,
+    y: 5,
+    zone: 'heavy',
+    isDark: true,
+    items: [
+      { itemId: 'keycard4', chance: 0.25 },
+      { itemId: 'painkillers', chance: 0.4 },
+      { itemId: 'docLore5', chance: 0.5 },
+    ],
+    lore: 'The morgue holds the remains of breach casualties. Some have gone missing — reanimated by SCP-049, or worse.',
+  },
+  {
+    id: 'backup-server',
+    name: 'Backup Server Room',
+    shortName: 'Backup Server',
+    description:
+      'A secondary server room, mirroring the main one. Redundant data backups hum here. SCP-079 has not yet fully infiltrated this node — a terminal here can force-unlock a single door system-wide.',
+    ambient: 'The whine of cooling fans. Status LEDs blink in patterns that feel deliberate.',
+    x: 4,
+    y: 5,
+    zone: 'deep',
+    isDark: true,
+    items: [
+      { itemId: 'keycard5', chance: 0.3 },
+      { itemId: 'lockpick', chance: 0.4 },
+      { itemId: 'docLore3', chance: 0.5 },
+      { itemId: 'battery', chance: 0.5 },
+    ],
+    lore: 'The backup server is isolated from SCP-079\'s primary network. A skilled operator can use it to override locked doors.',
+  },
+  {
+    id: 'emergency-stairs',
+    name: 'Emergency Stairwell',
+    shortName: 'Stairs',
+    description:
+      'A reinforced emergency stairwell descending to a lower maintenance level. The stairs are blocked by rubble partway down, but a side passage leads to a sealed emergency exit. The exit requires a Level 5 keycard — an alternate escape route.',
+    ambient: 'Echoing drips. The scuff of footsteps — yours, or someone else\'s.',
+    x: 5,
+    y: 5,
+    zone: 'exit',
+    isExit: true,
+    isDark: true,
+    items: [{ itemId: 'keycard4', chance: 0.3 }],
+    lore: 'The emergency stairwell is the facility\'s last-resort escape route. Few know it exists. Fewer still have reached it.',
+  },
 ]
 
 // ===== Doors =====
@@ -453,6 +655,34 @@ export const DOORS: Door[] = [
   { id: 'd-049-939', from: 'scp049-cell', to: 'scp939-nest', direction: 'S', keycardRequired: 4, heavy: true },
   { id: 'd-106-079', from: 'scp106-cell', to: 'scp079-core', direction: 'S', keycardRequired: 4, heavy: true },
   { id: 'd-682-001', from: 'scp682-chamber', to: 'scp001-vault', direction: 'S', keycardRequired: 5, heavy: true },
+
+  // ===== Column 5 horizontal (new east wing) =====
+  { id: 'd-gateb-elevator', from: 'gate-b', to: 'elevator-shaft', direction: 'E', keycardRequired: 3 },
+  { id: 'd-elevator-cafeteria', from: 'elevator-shaft', to: 'cafeteria', direction: 'S', keycardRequired: 1 },
+  { id: 'd-cafeteria-decontam', from: 'cafeteria', to: 'decontam', direction: 'S', keycardRequired: 2 },
+  { id: 'd-decontam-backupgen', from: 'decontam', to: 'backup-gen', direction: 'S', keycardRequired: 3, heavy: true },
+  { id: 'd-backupgen-ventilation', from: 'backup-gen', to: 'ventilation', direction: 'S', keycardRequired: 4, heavy: true },
+  { id: 'd-ventilation-stairs', from: 'ventilation', to: 'emergency-stairs', direction: 'S', keycardRequired: 5, heavy: true },
+
+  // ===== Column 5 <-> Column 4 horizontal connections (link new wing to old) =====
+  { id: 'd-labwing-cafeteria', from: 'lab-wing', to: 'cafeteria', direction: 'E', keycardRequired: 2 },
+  { id: 'd-medbay-decontam', from: 'medbay', to: 'decontam', direction: 'E', keycardRequired: 2 },
+  { id: 'd-682-backupgen', from: 'scp682-chamber', to: 'backup-gen', direction: 'E', keycardRequired: 4, heavy: true },
+  { id: 'd-001-ventilation', from: 'scp001-vault', to: 'ventilation', direction: 'E', keycardRequired: 5, heavy: true },
+
+  // ===== Row 5 horizontal (deep service level) =====
+  { id: 'd-storage-lockers', from: 'storage', to: 'locker-room', direction: 'E', keycardRequired: 2 },
+  { id: 'd-lockers-incinerator', from: 'locker-room', to: 'incinerator', direction: 'E', keycardRequired: 3, heavy: true },
+  { id: 'd-incinerator-morgue', from: 'incinerator', to: 'morgue', direction: 'E', keycardRequired: 3, heavy: true },
+  { id: 'd-morgue-backupserver', from: 'morgue', to: 'backup-server', direction: 'E', keycardRequired: 4, heavy: true },
+  { id: 'd-backupserver-stairs', from: 'backup-server', to: 'emergency-stairs', direction: 'E', keycardRequired: 5, heavy: true },
+
+  // ===== Row 4 -> Row 5 vertical connections =====
+  { id: 'd-maint-storage', from: 'maint-shaft', to: 'storage', direction: 'S', keycardRequired: 3 },
+  { id: 'd-corrh2-lockers', from: 'corridor-h2', to: 'locker-room', direction: 'S', keycardRequired: 3 },
+  { id: 'd-939-incinerator', from: 'scp939-nest', to: 'incinerator', direction: 'S', keycardRequired: 4, heavy: true },
+  { id: 'd-079-morgue', from: 'scp079-core', to: 'morgue', direction: 'S', keycardRequired: 4, heavy: true },
+  { id: 'd-001-backupserver', from: 'scp001-vault', to: 'backup-server', direction: 'S', keycardRequired: 5, heavy: true },
 ]
 
 export const ROOM_MAP: Record<string, Room> = Object.fromEntries(
@@ -501,4 +731,3 @@ export const ZONE_INFO: Record<Zone, { name: string; color: string; description:
   heavy: { name: 'Heavy Containment', color: '#f59e0b', description: 'High-risk anomalies. Elevated clearance required.' },
   deep: { name: 'Deep Containment', color: '#dc2626', description: 'The most dangerous entities. Maximum clearance.' },
   exit: { name: 'Surface Exit', color: '#a78bfa', description: 'Escape to the surface. Level 5 clearance required.' },
-}
