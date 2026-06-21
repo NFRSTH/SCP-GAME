@@ -66,3 +66,31 @@ npx jest --coverage
 - `package.json` — Added `test` and `test:watch` scripts; added `jest`, `ts-jest`, `@types/jest`, `supertest`, `@types/supertest`, `ts-node` as dev dependencies.
 - `__tests__/helpers.ts` — Shared test utilities.
 - `__tests__/*.test.ts` — The 7 test suites described above.
+
+  ## How to install
+
+If you don't have Bun (test it by going into cmd and typing `bun`), use this:
+
+powershell -c "irm bun.sh/install.ps1 | iex"
+
+First step is to cd into the dir (the command assumes it's in your downloads; change if it's somewhere else):
+
+cd %USERPROFILE%\Downloads\SCP-GAME-main\SCP-GAME-main
+
+Then install dependencies:
+
+bun install
+
+Then set up the database:
+
+bun run db:push
+
+Run tests (optional):
+
+bun test
+
+Start the game:
+
+bun run dev
+
+When you're all done, head to http://localhost:3000 and enjoy!
