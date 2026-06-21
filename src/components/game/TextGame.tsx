@@ -297,7 +297,10 @@ function ActionPanel({
     room.isExit ||
     room.id === 'power-rm' ||
     room.id === 'scp079-core' ||
-    room.id === 'scp860-door'
+    room.id === 'scp860-door' ||
+    room.id === 'backup-gen' ||
+    room.id === 'backup-server' ||
+    room.id === 'ventilation'
 
   return (
     <div className="scp-panel rounded-lg p-3 space-y-3">
