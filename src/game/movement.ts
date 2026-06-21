@@ -76,8 +76,9 @@ export function tryMoveToRoom(get: StoreGet, set: StoreSet, targetId: string): {
   const newRoom = getRoom(targetId)!
   s.addLog('move', `You move ${describeMove(from, targetId)} into ${newRoom.name}.`)
 
-  // Entering a dark room without flashlight drains sanity
-  if (newRoom.isDark && !get().player.flashlightOn) {
+  // Entering a dark room without flashlight or night vision drains sanity
+  const hasNVG = get().player.inventory.some((sl) => sl.item.id === 'nightVision')
+  if (newRoom.isDark && !get().player.flashlightOn && !hasNVG) {
     set((st) => ({ player: { ...st.player, sanity: Math.max(0, st.player.sanity - DARK_ROOM_SANITY_LOSS) } }))
     s.addLog('danger', `It is pitch black. Your sanity frays in the dark.`)
   }
