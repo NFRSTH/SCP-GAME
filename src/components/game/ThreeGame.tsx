@@ -149,9 +149,9 @@ function collide(pos: THREE.Vector3, walls: WallBox[]) {
       }
     }
   }
-  // facility bounds
-  pos.x = Math.max(0.5, Math.min(ROOM_SIZE * 5 - 0.5, pos.x))
-  pos.z = Math.max(0.5, Math.min(ROOM_SIZE * 5 - 0.5, pos.z))
+  // facility bounds (6x6 grid)
+  pos.x = Math.max(0.5, Math.min(ROOM_SIZE * 6 - 0.5, pos.x))
+  pos.z = Math.max(0.5, Math.min(ROOM_SIZE * 6 - 0.5, pos.z))
 }
 
 // ===== Player =====
@@ -252,7 +252,7 @@ function SpotLightFollow({ position }: { position: [number, number, number] }) {
   )
 }
 
-// ===== Rooms (floors + zone lighting) =====
+// ===== Rooms (floors + zone lighting + props) =====
 const Rooms = memo(function Rooms() {
   return (
     <group>
@@ -260,6 +260,7 @@ const Rooms = memo(function Rooms() {
         const [cx, , cz] = roomCenter(room.x, room.y)
         const zone = ZONE_INFO[room.zone]
         const zoneColor = new THREE.Color(zone.color)
+        const isDarkRoom = room.isDark
         return (
           <group key={room.id}>
             {/* floor */}
@@ -267,18 +268,22 @@ const Rooms = memo(function Rooms() {
               <planeGeometry args={[ROOM_SIZE, ROOM_SIZE]} />
               <meshStandardMaterial color={room.isExit ? '#1a1610' : '#0e1418'} />
             </mesh>
+            {/* floor grid lines for industrial feel */}
+            <gridHelper position={[cx, 0.01, cz]} args={[ROOM_SIZE, 4, '#1a2329', '#121820']} />
             {/* ceiling */}
             <mesh position={[cx, WALL_H, cz]} rotation={[Math.PI / 2, 0, 0]}>
               <planeGeometry args={[ROOM_SIZE, ROOM_SIZE]} />
               <meshStandardMaterial color="#070a0c" />
             </mesh>
+            {/* ceiling light fixture */}
+            <CeilingLight cx={cx} cz={cz} zoneColor={zoneColor} isDark={isDarkRoom} />
             {/* zone accent strip on floor edge */}
             <mesh position={[cx, 0.02, cz - ROOM_SIZE / 2 + 0.3]} rotation={[-Math.PI / 2, 0, 0]}>
               <planeGeometry args={[ROOM_SIZE - 0.6, 0.3]} />
               <meshStandardMaterial color={zoneColor} emissive={zoneColor} emissiveIntensity={0.4} />
             </mesh>
             {/* room label light */}
-            <pointLight position={[cx, 3.4, cz]} intensity={0.35} distance={9} color={zoneColor} />
+            <pointLight position={[cx, 3.4, cz]} intensity={isDarkRoom ? 0.12 : 0.35} distance={9} color={zoneColor} />
             {/* exit glow */}
             {room.isExit && (
               <mesh position={[cx, 2, cz - ROOM_SIZE / 2 + 0.6]}>
@@ -289,12 +294,283 @@ const Rooms = memo(function Rooms() {
             {/* special markers */}
             {room.id === 'power-rm' && <Marker cx={cx} cz={cz} color="#f59e0b" />}
             {room.id === 'scp079-core' && <Marker cx={cx} cz={cz} color="#0aff8a" />}
+            {room.id === 'backup-gen' && <Marker cx={cx} cz={cz} color="#f59e0b" />}
+            {room.id === 'backup-server' && <Marker cx={cx} cz={cz} color="#06b6d4" />}
+            {room.id === 'ventilation' && <Marker cx={cx} cz={cz} color="#10b981" />}
+            {/* room-specific props */}
+            <RoomProps roomId={room.id} cx={cx} cz={cz} />
           </group>
         )
       })}
     </group>
   )
 })
+
+// Ceiling light fixture with flickering fluorescent effect
+function CeilingLight({ cx, cz, zoneColor, isDark }: { cx: number; cz: number; zoneColor: THREE.Color; isDark: boolean }) {
+  const ref = useRef<THREE.Mesh>(null)
+  useFrame((s) => {
+    if (!ref.current) return
+    const mat = ref.current.material as THREE.MeshStandardMaterial
+    // flicker occasionally in dark rooms
+    if (isDark) {
+      const flicker = Math.random() < 0.04 ? 0.1 : 0.5
+      mat.emissiveIntensity = flicker
+    } else {
+      mat.emissiveIntensity = 0.8
+    }
+  })
+  return (
+    <mesh ref={ref} position={[cx, WALL_H - 0.1, cz]}>
+      <boxGeometry args={[3, 0.1, 1]} />
+      <meshStandardMaterial color={zoneColor} emissive={zoneColor} emissiveIntensity={isDark ? 0.3 : 0.8} />
+    </mesh>
+  )
+}
+
+// Room-specific props (furniture, equipment) — adds visual variety
+const PROP_CACHE = new Map<string, React.ReactNode>()
+function RoomProps({ roomId, cx, cz }: { roomId: string; cx: number; cz: number }) {
+  // Render static props based on room type — memoized for performance
+  if (PROP_CACHE.has(roomId)) {
+    const cached = PROP_CACHE.get(roomId)!
+    return <group position={[0, 0, 0]}>{cached}</group>
+  }
+  const props = renderRoomProps(roomId, cx, cz)
+  PROP_CACHE.set(roomId, props)
+  return <group position={[0, 0, 0]}>{props}</group>
+}
+
+function renderRoomProps(roomId: string, cx: number, cz: number): React.ReactNode {
+  // Server racks (server rooms)
+  if (roomId === 'server-rm' || roomId === 'backup-server') {
+    return (
+      <>
+        {[0, 1, 2].map((i) => (
+          <group key={i} position={[cx - 2 + i * 2, 1, cz - 2]}>
+            <mesh castShadow>
+              <boxGeometry args={[1.2, 2.4, 0.8]} />
+              <meshStandardMaterial color="#0a0d0f" />
+            </mesh>
+            {/* blinking LEDs */}
+            {[0, 1, 2, 3].map((j) => (
+              <mesh key={j} position={[0.3, 0.6 + j * 0.3, 0.42]}>
+                <sphereGeometry args={[0.04, 6, 6]} />
+                <meshStandardMaterial color={j % 2 ? '#10b981' : '#d4af37'} emissive={j % 2 ? '#10b981' : '#d4af37'} emissiveIntensity={0.8} />
+              </mesh>
+            ))}
+          </group>
+        ))}
+      </>
+    )
+  }
+  // Beds (cells, medbay, morgue)
+  if (roomId === 'cells-d' || roomId === 'medbay' || roomId === 'morgue') {
+    return (
+      <>
+        <mesh position={[cx - 2, 0.4, cz + 2]} castShadow>
+          <boxGeometry args={[1.8, 0.5, 2.5]} />
+          <meshStandardMaterial color={roomId === 'morgue' ? '#2a3a3a' : '#3a4a5a'} />
+        </mesh>
+        <mesh position={[cx - 2, 0.7, cz + 2]}>
+          <boxGeometry args={[1.6, 0.15, 2.3]} />
+          <meshStandardMaterial color="#6b7d8a" />
+        </mesh>
+      </>
+    )
+  }
+  // Desks (reception, research-lab, checkpoint)
+  if (roomId === 'reception' || roomId === 'research-lab' || roomId === 'checkpoint') {
+    return (
+      <>
+        <mesh position={[cx + 2, 0.8, cz - 2]} castShadow>
+          <boxGeometry args={[2.5, 0.1, 1.2]} />
+          <meshStandardMaterial color="#1a2329" />
+        </mesh>
+        {[0, 1, 2].map((i) => (
+          <mesh key={i} position={[cx + 1.3 + i * 0.6, 0.4, cz - 2]}>
+            <boxGeometry args={[0.1, 0.8, 0.1]} />
+            <meshStandardMaterial color="#0a0d0f" />
+          </mesh>
+        ))}
+        {/* monitor */}
+        <mesh position={[cx + 2, 1.1, cz - 2.3]} castShadow>
+          <boxGeometry args={[0.7, 0.5, 0.05]} />
+          <meshStandardMaterial color="#06b6d4" emissive="#06b6d4" emissiveIntensity={0.4} />
+        </mesh>
+      </>
+    )
+  }
+  // Crates (storage, armory)
+  if (roomId === 'storage' || roomId === 'armory') {
+    return (
+      <>
+        {[
+          [cx - 2, cz - 2], [cx + 2, cz + 1], [cx - 1, cz + 2], [cx + 1, cz - 1],
+        ].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.8, z]} castShadow>
+            <boxGeometry args={[1.2, 1.6, 1.2]} />
+            <meshStandardMaterial color={i % 2 ? '#3a2f1a' : '#2a3a2a'} />
+          </mesh>
+        ))}
+      </>
+    )
+  }
+  // Tables (cafeteria, locker-room)
+  if (roomId === 'cafeteria' || roomId === 'locker-room') {
+    return (
+      <>
+        {[0, 1].map((i) => (
+          <group key={i} position={[cx + (i ? 2 : -2), 0, cz]}>
+            <mesh position={[0, 0.8, 0]} castShadow>
+              <boxGeometry args={[2, 0.1, 1]} />
+              <meshStandardMaterial color="#3a4a5a" />
+            </mesh>
+            {[[-0.8, -0.4], [0.8, -0.4], [-0.8, 0.4], [0.8, 0.4]].map(([x, z], j) => (
+              <mesh key={j} position={[x, 0.4, z]}>
+                <cylinderGeometry args={[0.08, 0.08, 0.8, 6]} />
+                <meshStandardMaterial color="#1a2329" />
+              </mesh>
+            ))}
+          </group>
+        ))}
+      </>
+    )
+  }
+  // Lockers (locker-room, checkpoint)
+  if (roomId === 'locker-room') {
+    return (
+      <>
+        {[0, 1, 2, 3].map((i) => (
+          <mesh key={i} position={[cx - 2.5 + i * 0.9, 1.2, cz + 2.5]} castShadow>
+            <boxGeometry args={[0.7, 2.4, 0.6]} />
+            <meshStandardMaterial color="#2a4a5a" />
+          </mesh>
+        ))}
+      </>
+    )
+  }
+  // Power generator (power-rm, backup-gen)
+  if (roomId === 'power-rm' || roomId === 'backup-gen') {
+    return (
+      <>
+        <mesh position={[cx, 1, cz]} castShadow>
+          <cylinderGeometry args={[1.5, 1.8, 2, 12]} />
+          <meshStandardMaterial color="#1a2a1a" metalness={0.7} roughness={0.4} />
+        </mesh>
+        <mesh position={[cx, 2.2, cz]}>
+          <cylinderGeometry args={[0.3, 0.3, 0.6, 8]} />
+          <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.6} />
+        </mesh>
+        <pointLight position={[cx, 2.5, cz]} intensity={0.5} distance={6} color="#f59e0b" />
+      </>
+    )
+  }
+  // Ventilation ducts (ventilation)
+  if (roomId === 'ventilation') {
+    return (
+      <>
+        {[0, 1, 2].map((i) => (
+          <mesh key={i} position={[cx - 2 + i * 2, 3, cz]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.5, 0.5, 2, 10]} />
+            <meshStandardMaterial color="#1a2329" metalness={0.8} roughness={0.3} />
+          </mesh>
+        ))}
+      </>
+    )
+  }
+  // Morgue drawers
+  if (roomId === 'morgue') {
+    return (
+      <>
+        {[0, 1, 2, 3].map((i) => (
+          <mesh key={i} position={[cx - 2.5, 0.6 + i * 0.7, cz + 2.5]} castShadow>
+            <boxGeometry args={[2, 0.6, 0.5]} />
+            <meshStandardMaterial color="#2a3a3a" metalness={0.6} />
+          </mesh>
+        ))}
+      </>
+    )
+  }
+  // Incinerator furnace
+  if (roomId === 'incinerator') {
+    return (
+      <>
+        <mesh position={[cx, 1.5, cz]} castShadow>
+          <boxGeometry args={[2, 3, 2]} />
+          <meshStandardMaterial color="#2a1a1a" />
+        </mesh>
+        <mesh position={[cx, 1.5, cz + 1.01]}>
+          <planeGeometry args={[1.2, 1.5]} />
+          <meshStandardMaterial color="#dc2626" emissive="#dc2626" emissiveIntensity={0.5} />
+        </mesh>
+        <pointLight position={[cx, 1.5, cz + 1.5]} intensity={0.6} distance={5} color="#dc2626" />
+      </>
+    )
+  }
+  // Elevator shaft (gap in floor)
+  if (roomId === 'elevator-shaft') {
+    return (
+      <>
+        <mesh position={[cx, 0.05, cz]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[4, 4]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+        {/* hanging cable */}
+        <mesh position={[cx + 1, 2, cz - 1]}>
+          <cylinderGeometry args={[0.05, 0.05, 4, 6]} />
+          <meshStandardMaterial color="#3a3a3a" metalness={0.8} />
+        </mesh>
+      </>
+    )
+  }
+  // Decontam spray nozzles
+  if (roomId === 'decontam') {
+    return (
+      <>
+        {[0, 1, 2, 3].map((i) => (
+          <mesh key={i} position={[cx + (i % 2 ? 2 : -2), WALL_H - 0.3, cz + (i < 2 ? -2 : 2)]}>
+            <cylinderGeometry args={[0.15, 0.15, 0.3, 6]} />
+            <meshStandardMaterial color="#2a4a5a" emissive="#06b6d4" emissiveIntensity={0.3} />
+          </mesh>
+        ))}
+      </>
+    )
+  }
+  // SCP containment chamber props
+  if (roomId.includes('scp') && roomId !== 'scp860-door') {
+    return (
+      <>
+        {/* observation glass */}
+        <mesh position={[cx, 1.5, cz - 2.5]}>
+          <boxGeometry args={[5, 2, 0.1]} />
+          <meshStandardMaterial color="#1a2a3a" transparent opacity={0.3} metalness={0.9} roughness={0.1} />
+        </mesh>
+        {/* containment markings on floor */}
+        <mesh position={[cx, 0.03, cz]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.5, 2, 24]} />
+          <meshStandardMaterial color="#dc2626" emissive="#dc2626" emissiveIntensity={0.3} transparent opacity={0.4} />
+        </mesh>
+      </>
+    )
+  }
+  // Corridor pipes
+  if (roomId.includes('corridor')) {
+    return (
+      <>
+        <mesh position={[cx, WALL_H - 0.3, cz - 2]}>
+          <cylinderGeometry args={[0.15, 0.15, ROOM_SIZE - 1, 8]} />
+          <meshStandardMaterial color="#2a3640" metalness={0.6} />
+        </mesh>
+        <mesh position={[cx, WALL_H - 0.3, cz + 2]}>
+          <cylinderGeometry args={[0.12, 0.12, ROOM_SIZE - 1, 8]} />
+          <meshStandardMaterial color="#3a2a2a" metalness={0.6} />
+        </mesh>
+      </>
+    )
+  }
+  return null
+}
 
 function Marker({ cx, cz, color }: { cx: number; cz: number; color: string }) {
   const c = new THREE.Color(color)
@@ -827,7 +1103,7 @@ export function ThreeGame() {
   const room = getRoom(roomId)
   const lootHere = useGame((s) => s.loot[roomId])
   const lootCount = (lootHere || EMPTY_LOOT).length
-  const canInteract = !!(room && (room.isExit || room.id === 'power-rm' || room.id === 'scp079-core' || room.id === 'scp860-door'))
+  const canInteract = !!(room && (room.isExit || room.id === 'power-rm' || room.id === 'scp079-core' || room.id === 'scp860-door' || room.id === 'backup-gen' || room.id === 'backup-server' || room.id === 'ventilation'))
   const prompt = lootCount > 0
     ? `${lootCount} item(s) here — pickup`
     : canInteract
