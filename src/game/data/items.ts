@@ -132,6 +132,65 @@ export const ITEMS: Record<string, Item> = {
     description: '"...all units fall back to Gate A. 079 has locked us out of the elevators. We are trapped down here."',
     type: 'document',
   },
+  // New items for expanded facility
+  docLore4: {
+    id: 'docLore4',
+    name: 'Decontamination Report',
+    description: '"Subject 939 specimens have breached the ventilation shafts. Seal all ducts between Labs and Heavy Containment."',
+    type: 'document',
+  },
+  docLore5: {
+    id: 'docLore5',
+    name: 'M.T.F. Deployment Order',
+    description: '"Mobile Task Force Epsilon-11 en route. Expect armed contact. DO NOT engage. Repeat: DO NOT engage."',
+    type: 'document',
+  },
+  docLore6: {
+    id: 'docLore6',
+    name: 'Cafeteria Log',
+    description: '"Last meal served 6 hours before breach. Something came through the vents during lunch. We lost three staff."',
+    type: 'document',
+  },
+  docLore7: {
+    id: 'docLore7',
+    name: 'Elevator Maintenance Tag',
+    description: '"Freight elevator out of service — cable severed from below. Cause: unknown. Recommend full inspection after breach containment."',
+    type: 'document',
+  },
+  docLore8: {
+    id: 'docLore8',
+    name: 'Storage Manifest',
+    description: '"Crate 1138 missing contents — logged as SCP-860 blue key. Last scanned in the storage bay. Who signed it out?"',
+    type: 'document',
+  },
+  gasMask: {
+    id: 'gasMask',
+    name: 'Gas Mask',
+    description: 'A respirator mask. Protects against toxic gas and decontamination spray. Also mutes your breathing — quieter movement near 939.',
+    type: 'tool',
+    uses: 3,
+  },
+  painkillers: {
+    id: 'painkillers',
+    name: 'Painkillers',
+    description: 'A bottle of analgesics. Restores 10 health and ignores stamina drain for 3 turns.',
+    type: 'medical',
+    healAmount: 10,
+    uses: 1,
+  },
+  lockpick: {
+    id: 'lockpick',
+    name: 'Lockpick Set',
+    description: 'A set of picks. Can force open one 079-locked or keycard-locked door without the required clearance. Single use.',
+    type: 'tool',
+    uses: 1,
+  },
+  nightVision: {
+    id: 'nightVision',
+    name: 'Night Vision Goggles',
+    description: 'Military-grade NVGs. Reveal dark rooms without a flashlight and without battery drain. Found in the armory.',
+    type: 'tool',
+  },
 }
 
 export function getItem(id: string): Item | undefined {
