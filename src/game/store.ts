@@ -320,6 +320,33 @@ export const useGame = create<GameState>()(
           } else {
             s.addLog('info', 'No locked doors to override right now.')
           }
+        } else if (item.id === 'gasMask') {
+          // Gas mask: temporarily reduces noise (quieter movement) and protects from decontam gas
+          set((st) => ({ player: { ...st.player, noiseLevel: 0 } }))
+          s.addLog('success', `You don the gas mask. Your breathing is muffled — SCP-939 will have a harder time hearing you.`)
+          get().consumeItem(itemId)
+        } else if (item.id === 'painkillers') {
+          // Painkillers: small heal + stamina boost
+          const heal = item.healAmount ?? 10
+          set((st) => ({ player: { ...st.player, health: Math.min(st.player.maxHealth, st.player.health + heal), stamina: Math.min(st.player.maxStamina, st.player.stamina + 30) } }))
+          s.addLog('success', `You take painkillers. +${heal} HP, +30 stamina. The edge dulls.`)
+          get().consumeItem(itemId)
+        } else if (item.id === 'lockpick') {
+          // Lockpick: force-open a locked door OR bypass a keycard requirement on the next move
+          const locked = s.facility.lockedDoors
+          if (locked.length > 0) {
+            const d = locked[0]
+            set((st) => ({ facility: { ...st.facility, lockedDoors: st.facility.lockedDoors.filter((x) => x !== d) } }))
+            s.addLog('success', `You pick the lock on a 079-sealed door. It clicks open.`)
+            get().consumeItem(itemId)
+          } else {
+            s.addLog('info', 'No locked doors to pick right now. The lockpick waits.')
+          }
+        } else if (item.id === 'nightVision') {
+          // Night vision: reveals dark rooms without flashlight
+          set((st) => ({ player: { ...st.player, flashlightBattery: 100, flashlightOn: false } }))
+          s.addLog('success', `You equip night vision goggles. Dark rooms are now visible without draining flashlight battery.`)
+          s.addLog('info', '(NVGs are passive — dark room sanity penalties are negated while in inventory.)')
         } else {
           s.addLog('info', `You examine the ${item.name}. ${item.description}`)
         }
@@ -445,6 +472,48 @@ export const useGame = create<GameState>()(
         }
         if (room.id === 'scp860-door') {
           s.addLog('lore', 'The blue key opens the door to an impossible forest. SCP-860-2 stalks within. You decide not to enter.')
+          return
+        }
+        // Backup generator — reduces future power outage duration
+        if (room.id === 'backup-gen') {
+          if (s.player.powerRestored) {
+            s.addLog('info', 'The backup generator is online. Main power is already stable.')
+          } else {
+            set((st) => ({
+              player: { ...st.player, powerRestored: true },
+              facility: { ...st.facility, powerOn: true, powerOutageTicks: 0, breachLevel: Math.max(0, st.facility.breachLevel - 15) },
+            }))
+            s.addLog('success', 'You activate the backup generator. Emergency power flows — future blackouts will be shorter.')
+            s.addLog('system', 'The battery bank glows brighter. Door locks will hold even if 079 cuts the reactor.')
+          }
+          get().tick()
+          return
+        }
+        // Backup server — force-unlocks one 079-locked door
+        if (room.id === 'backup-server') {
+          const locked = s.facility.lockedDoors
+          if (locked.length > 0) {
+            const d = locked[0]
+            set((st) => ({ facility: { ...st.facility, lockedDoors: st.facility.lockedDoors.filter((x) => x !== d) } }))
+            s.addLog('success', 'You access the backup server terminal and force-release a 079-locked door somewhere in the facility.')
+            s.addLog('system', 'SCP-079 detects the intrusion. The screen flashes: "PETTY."')
+          } else {
+            s.addLog('info', 'No doors are currently locked by SCP-079. The backup server hums idly.')
+          }
+          get().tick()
+          return
+        }
+        // Ventilation control — slows SCP-939
+        if (room.id === 'ventilation') {
+          const scp939 = s.scps.find((sc) => sc.scpId === 'scp-939')
+          if (scp939 && scp939.state !== 'contained') {
+            set((st) => ({ scps: st.scps.map((sc) => sc.scpId === 'scp-939' ? { ...sc, cooldown: Math.max(sc.cooldown, 3), state: 'docile' as const } : sc) }))
+            s.addLog('success', 'You seal the ventilation ducts. SCP-939 is confined — it can no longer hunt through the vents.')
+            s.addLog('danger', 'The skittering in the ducts stops. Then an angry shriek echoes from deep below.')
+          } else {
+            s.addLog('info', 'The ventilation system is already sealed. SCP-939 is not a current threat.')
+          }
+          get().tick()
           return
         }
         s.addLog('info', `There is nothing special to interact with here.`)
